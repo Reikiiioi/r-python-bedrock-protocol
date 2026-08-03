@@ -127,18 +127,40 @@ class RakNetClientProtocol(asyncio.DatagramProtocol):
         self.send_frame(bytes(packet))
 
     def _handle_connection_accepted(self, data: bytes):
+        logger.debug("ID_CONNECTION_REQUEST_ACCEPTED hex: %s", data.hex())
         self.connected = True
+
         self._connected_event.set()
         now_ms = int(time.time() * 1000)
         server_addr = _pack_address(self.host, self.port)
-        empty_addr = b'\x04\x00\x00\x00\x00\x00\x00'
+        empty_addr = b'\x04\x7f\x00\x00\x01\x00\x00'
         packet = bytearray()
         packet.append(ID_NEW_INCOMING_CONNECTION)
         packet.extend(server_addr)
-        for _ in range(9):
+        for _ in range(10):
             packet.extend(empty_addr)
         packet.extend(struct.pack('>QQ', now_ms, now_ms))
         self.send_frame(bytes(packet))
+
+        try:
+            asyncio.create_task(self._ping_loop())
+        except Exception:
+            pass
+
+    async def _ping_loop(self):
+        start_time = time.monotonic()
+        while self.connected:
+            try:
+                await asyncio.sleep(1.0)
+                if not self.connected:
+                    break
+                ping_ms = int((time.monotonic() - start_time) * 1000)
+                ping_pkt = bytearray([ID_CONNECTED_PING])
+                ping_pkt.extend(struct.pack('>Q', ping_ms))
+                self.send_frame(bytes(ping_pkt), reliable=False)
+            except Exception:
+                break
+
 
     def _handle_ping(self, data: bytes):
         if len(data) < 9:
@@ -229,6 +251,7 @@ class RakNetClientProtocol(asyncio.DatagramProtocol):
                 body = complete
             if body:
                 pid = body[0]
+                logger.debug("RakNet Frame ID: %d (0x%02x) len: %d", pid, pid, len(body))
                 if pid == ID_CONNECTION_REQUEST_ACCEPTED:
                     self._handle_connection_accepted(body)
                 elif pid == ID_DISCONNECT_NOTIFICATION:
@@ -237,8 +260,12 @@ class RakNetClientProtocol(asyncio.DatagramProtocol):
                     self.on_game_packet(body)
 
 
+
     def send_frame(self, payload: bytes, reliable: bool=True):
+        if payload:
+            logger.debug("RakNet SEND Frame payload len: %d ID: %d (0x%02x)", len(payload), payload[0], payload[0])
         max_payload = self.mtu - 60
+
         if len(payload) > max_payload and reliable:
             self._send_split(payload, max_payload)
             return
@@ -295,8 +322,12 @@ class RakNetClientProtocol(asyncio.DatagramProtocol):
         if self.transport:
             try:
                 self.transport.sendto(data)
-            except TypeError:
-                self.transport.sendto(data, (self.host, self.port))
+            except Exception:
+                try:
+                    self.transport.sendto(data, (self.host, self.port))
+                except Exception:
+                    pass
+
 
 
     def _purge_old_split_buffers(self):

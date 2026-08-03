@@ -115,6 +115,14 @@ class PacketWriter:
         self.buffer.extend(struct.pack('>H', value))
         return self
 
+    def write_int_be(self, value: int) -> 'PacketWriter':
+        self.buffer.extend(struct.pack('>i', value))
+        return self
+
+    def write_uint_be(self, value: int) -> 'PacketWriter':
+        self.buffer.extend(struct.pack('>I', value))
+        return self
+
     def write_int_le(self, value: int) -> 'PacketWriter':
         self.buffer.extend(struct.pack('<i', value))
         return self
@@ -122,6 +130,7 @@ class PacketWriter:
     def write_uint_le(self, value: int) -> 'PacketWriter':
         self.buffer.extend(struct.pack('<I', value))
         return self
+
 
     def write_long_le(self, value: int) -> 'PacketWriter':
         self.buffer.extend(struct.pack('<q', value))

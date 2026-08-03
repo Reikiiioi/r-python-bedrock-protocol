@@ -160,5 +160,7 @@ class PacketID(IntEnum):
     SET_HUD = 182
     AWARD_ACHIEVEMENT = 183
     CLOSE_FORM = 184
+    REQUEST_NETWORK_SETTINGS = 193
+
 PACKET_NAMES: dict[int, str] = {pid: pid.name.lower() for pid in PacketID}
 PACKET_IDS: dict[str, int] = {name: pid for pid, name in PACKET_NAMES.items()}

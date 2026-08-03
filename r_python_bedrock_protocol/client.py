@@ -70,7 +70,10 @@ class BedrockClient(EventEmitter):
         await loop.create_datagram_endpoint(lambda: self._raknet, remote_addr=(ip_host, self.port))
         await self._raknet.wait_connected(timeout=t)
         self.emit('connect')
+        # self._send_request_network_settings()
         self._send_login()
+
+
 
 
     async def disconnect(self):
@@ -93,17 +96,31 @@ class BedrockClient(EventEmitter):
         skin_jwt = create_client_skin_jwt(cfg.username, client_uuid=client_uuid, crypto_ctx=self._crypto_ctx, device_info=device_info, skin_data_b64=skin_b64, skin_id=skin_cfg.skin_id, skin_width=skin_cfg.width, skin_height=skin_cfg.height, arm_size=skin_cfg.arm_size, cape_data=skin_cfg.cape_data, cape_id=skin_cfg.cape_id, cape_on_classic=skin_cfg.cape_on_classic, is_persona=skin_cfg.is_persona, persona_pieces=skin_cfg.persona_pieces, resource_patch_b64=skin_cfg.resource_patch)
         chain_bytes = f'{{"chain":["{chain_jwt}"]}}'.encode('utf-8')
         skin_bytes = skin_jwt.encode('utf-8')
+        payload = PacketWriter()
+        payload.write_uint_le(len(chain_bytes))
+        payload.write_bytes(chain_bytes)
+        payload.write_uint_le(len(skin_bytes))
+        payload.write_bytes(skin_bytes)
+        payload_bytes = payload.get_bytes()
+
         body = PacketWriter()
         body.write_varint(PacketID.LOGIN)
-        body.write_int_le(self.protocol_version)
-        body.write_uint_le(len(chain_bytes))
-        body.write_bytes(chain_bytes)
-        body.write_uint_le(len(skin_bytes))
-        body.write_bytes(skin_bytes)
-        self._send_raw_batch(body.get_bytes())
+        body.write_int_be(self.protocol_version)
+        body.write_uvarint(len(payload_bytes))
+        body.write_bytes(payload_bytes)
+
+        raw = body.get_bytes()
+        frame = PacketWriter()
+        frame.write_uvarint(len(raw))
+        frame.write_bytes(raw)
+        self._send_raw_batch(frame.get_bytes())
+
+
 
     def _handle_game_packet(self, batch_data: bytes):
+        logger.debug("on_game_packet len: %d", len(batch_data))
         try:
+
             if self._cipher:
                 batch_data = self._cipher.decrypt(batch_data)
             decompressed = self._decompress(batch_data)
@@ -148,7 +165,10 @@ class BedrockClient(EventEmitter):
                 self._handle_tick_sync(reader)
         elif pkt_id == PacketID.TEXT:
             self._handle_text(reader)
+        elif pkt_id == PacketID.SET_TITLE:
+            self._handle_set_title(reader)
         elif pkt_id == PacketID.DISCONNECT:
+
             hide = reader.read_bool()
             reason = reader.read_string() if not hide and reader.remaining() > 0 else ''
             logger.info('Disconnected: %s', reason or '(no reason)')
@@ -160,6 +180,18 @@ class BedrockClient(EventEmitter):
                 logger.info('Transfer request → %s:%d', host, port)
                 self.emit('transfer', {'host': host, 'port': port})
         self.emit('packet', {'id': pkt_id, 'data': raw})
+
+    def _send_request_network_settings(self):
+        body = PacketWriter()
+        body.write_varint(PacketID.REQUEST_NETWORK_SETTINGS)
+        body.write_int_be(self.protocol_version)
+        raw = body.get_bytes()
+        frame = PacketWriter()
+        frame.write_uvarint(len(raw))
+        frame.write_bytes(raw)
+        batch = b'\xfe' + frame.get_bytes()
+        if self._raknet:
+            self._raknet.send_frame(batch)
 
     def _handle_network_settings(self, reader: PacketReader):
         if reader.remaining() < 4:
@@ -173,6 +205,8 @@ class BedrockClient(EventEmitter):
             logger.warning('Server wants snappy; python-snappy not installed — may fail.')
         logger.debug('NetworkSettings: threshold=%d algo=%s', threshold, algo_name)
         self.emit('network_settings', {'threshold': threshold, 'algorithm': algo_name})
+        self._send_login()
+
 
     def _handle_server_handshake(self, reader: PacketReader):
         try:
@@ -232,11 +266,41 @@ class BedrockClient(EventEmitter):
         try:
             pkt_type = reader.read_byte()
             _needs_tr = reader.read_bool()
-            source = reader.read_string() if pkt_type in (1, 2, 7, 8, 9) else ''
-            msg = reader.read_string()
-            self.emit('text', {'type': pkt_type, 'source_name': source, 'message': msg})
+            source = ''
+            msg = ''
+            if pkt_type in (1, 2, 7, 8, 9):
+                source = reader.read_string()
+                msg = reader.read_string()
+            else:
+                msg = reader.read_string()
+            
+            clean_msg = msg
+            if msg.startswith('{') and 'rawtext' in msg:
+                try:
+                    import json
+                    data = json.loads(msg)
+                    parts = []
+                    for item in data.get('rawtext', []):
+                        if 'text' in item:
+                            parts.append(item['text'])
+                    if parts:
+                        clean_msg = ''.join(parts)
+                except Exception:
+                    pass
+
+            self.emit('text', {'type': pkt_type, 'source_name': source, 'message': clean_msg, 'raw_message': msg})
         except Exception as exc:
             logger.debug('Text parse error: %s', exc)
+
+    def _handle_set_title(self, reader: PacketReader):
+        try:
+            type_id = reader.read_varint()
+            text = reader.read_string()
+            if text:
+                self.emit('text', {'type': 0, 'source_name': '[TITLE]', 'message': text, 'raw_message': text})
+        except Exception:
+            pass
+
 
     def _send_resource_pack_response(self, status: int):
         w = PacketWriter()
@@ -290,11 +354,10 @@ class BedrockClient(EventEmitter):
         self._send_raw_batch(frame.get_bytes())
 
     def _compress(self, data: bytes) -> bytes:
-        if len(data) < self._compress_threshold:
-            return b'\xfe' + data
         if self._compress_algo == 1 and _SNAPPY_AVAILABLE:
             return b'\xfe' + _snappy.compress(data)
-        return compress_batch(data)
+        return b'\xfe' + zlib.compress(data, 7)
+
 
     def _decompress(self, data: bytes | memoryview) -> bytes:
         raw = bytes(data)
@@ -321,6 +384,8 @@ class BedrockClient(EventEmitter):
             batch = self._cipher.encrypt(batch)
         if self._raknet:
             self._raknet.send_frame(batch)
+
+
 
 def create_client(host: str='127.0.0.1', port: int=19132, *, config: BotConfig | None=None, username: str='Steve', offline: bool=True, version: str | int=LATEST_VERSION, device: str='android') -> BedrockClient:
     return BedrockClient(host, port, config=config, username=username, offline=offline, version=version, device=device)
