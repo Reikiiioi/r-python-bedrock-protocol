@@ -6,11 +6,10 @@ for _ver, _proto in VERSIONS.items():
     PROTOCOL_TO_VERSION[_proto] = _ver
 
 def get_protocol(version: str) -> int:
-    try:
+    if version in VERSIONS:
         return VERSIONS[version]
-    except KeyError:
-        known = ', '.join(sorted(VERSIONS))
-        raise ValueError(f'Unknown Bedrock version {version!r}. Supported: {known}') from None
+    return LATEST_PROTOCOL
+
 
 def get_version(protocol: int) -> str:
     try:
