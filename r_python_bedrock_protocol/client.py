@@ -58,11 +58,20 @@ class BedrockClient(EventEmitter):
     async def connect(self, timeout: float | None=None):
         t = timeout if timeout is not None else self.config.connect_timeout
         loop = asyncio.get_running_loop()
-        self._raknet = RakNetClientProtocol(host=self.host, port=self.port, mtu=self.config.mtu, on_game_packet=self._handle_game_packet)
-        await loop.create_datagram_endpoint(lambda: self._raknet, remote_addr=(self.host, self.port))
+        try:
+            addr_info = await loop.getaddrinfo(self.host, self.port, family=socket.AF_INET)
+            if addr_info:
+                ip_host = addr_info[0][4][0]
+            else:
+                ip_host = self.host
+        except Exception:
+            ip_host = self.host
+        self._raknet = RakNetClientProtocol(host=ip_host, port=self.port, mtu=self.config.mtu, on_game_packet=self._handle_game_packet)
+        await loop.create_datagram_endpoint(lambda: self._raknet, remote_addr=(ip_host, self.port))
         await self._raknet.wait_connected(timeout=t)
         self.emit('connect')
         self._send_login()
+
 
     async def disconnect(self):
         if self._raknet and self._raknet.transport:

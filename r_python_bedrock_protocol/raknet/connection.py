@@ -5,7 +5,8 @@ import logging
 import os
 from collections import OrderedDict
 from typing import Callable, Optional
-from .protocol import RAKNET_MAGIC, ID_OPEN_CONNECTION_REQUEST_1, ID_OPEN_CONNECTION_REPLY_1, ID_OPEN_CONNECTION_REQUEST_2, ID_OPEN_CONNECTION_REPLY_2, ID_CONNECTION_REQUEST, ID_CONNECTION_REQUEST_ACCEPTED, ID_CONNECTED_PING, ID_CONNECTED_PONG, ID_ACK, ID_NACK, ID_NEW_INCOMING_CONNECTION
+from .protocol import RAKNET_MAGIC, ID_OPEN_CONNECTION_REQUEST_1, ID_OPEN_CONNECTION_REPLY_1, ID_OPEN_CONNECTION_REQUEST_2, ID_OPEN_CONNECTION_REPLY_2, ID_CONNECTION_REQUEST, ID_CONNECTION_REQUEST_ACCEPTED, ID_CONNECTED_PING, ID_CONNECTED_PONG, ID_ACK, ID_NACK, ID_NEW_INCOMING_CONNECTION, ID_DISCONNECT_NOTIFICATION
+
 logger = logging.getLogger(__name__)
 _SPLIT_TTL = 30.0
 _SENT_CACHE_MAX = 512
@@ -226,8 +227,15 @@ class RakNetClientProtocol(asyncio.DatagramProtocol):
                     continue
                 del self._split_buffers[split_id]
                 body = complete
-            if body and body[0] == 254 and self.on_game_packet:
-                self.on_game_packet(body)
+            if body:
+                pid = body[0]
+                if pid == ID_CONNECTION_REQUEST_ACCEPTED:
+                    self._handle_connection_accepted(body)
+                elif pid == ID_DISCONNECT_NOTIFICATION:
+                    self.connected = False
+                elif pid == 254 and self.on_game_packet:
+                    self.on_game_packet(body)
+
 
     def send_frame(self, payload: bytes, reliable: bool=True):
         max_payload = self.mtu - 60
@@ -285,7 +293,11 @@ class RakNetClientProtocol(asyncio.DatagramProtocol):
 
     def _sendto(self, data: bytes):
         if self.transport:
-            self.transport.sendto(data, (self.host, self.port))
+            try:
+                self.transport.sendto(data)
+            except TypeError:
+                self.transport.sendto(data, (self.host, self.port))
+
 
     def _purge_old_split_buffers(self):
         now = time.monotonic()

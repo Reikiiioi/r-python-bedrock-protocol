@@ -37,7 +37,8 @@ class TestVersions(unittest.TestCase):
 
     def test_unknown_version_raises(self):
         with self.assertRaises(ValueError):
-            get_protocol("0.0.0")
+            get_protocol("invalid_ver")
+
 
     def test_unknown_protocol_raises(self):
         with self.assertRaises(ValueError):

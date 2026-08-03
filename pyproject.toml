@@ -23,3 +23,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/Reikiioi/r-python-bedrock-protocol"
 Repository = "https://github.com/Reikiioi/r-python-bedrock-protocol"
+
+[tool.setuptools.packages.find]
+include = ["r_python_bedrock_protocol*"]
+
