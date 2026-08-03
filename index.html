@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>r-python-bedrock-protocol — Async Minecraft Bedrock Protocol for Python</title>
+  <meta name="description" content="High-performance async Python library for Minecraft: Bedrock Edition (MCPE) protocol, RakNet transport, and multi-bot orchestration.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #111726;
+      --bg-card-hover: #172033;
+      --bg-code: #0b0f19;
+      --border-color: #1e293b;
+      --border-glow: rgba(56, 189, 248, 0.3);
+      --accent-cyan: #38bdf8;
+      --accent-purple: #a855f7;
+      --accent-emerald: #10b981;
+      --accent-blue: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+
+    body {
+      overflow-x: hidden;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.06) 0%, transparent 40%);
+      min-height: 100vh;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header Navbar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(9, 13, 22, 0.85);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .badge-ver {
+      font-size: 0.75rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      padding: 3px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      font-family: 'Fira Code', monospace;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 28px;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--accent-cyan);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-pip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-pip:hover {
+      border-color: var(--accent-cyan);
+      color: var(--text-main);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 100px 0 80px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 780px;
+      margin: 0 auto 40px;
+      font-weight: 400;
+    }
+
+    .hero-btns {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 60px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: #000;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all 0.25s;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(56, 189, 248, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-weight: 600;
+      padding: 14px 32px;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all 0.25s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--text-muted);
+    }
+
+    /* Live Preview Box */
+    .code-preview-window {
+      background: var(--bg-code);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.1);
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .preview-header {
+      background: #0f1422;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+    }
+
+    .code-content {
+      padding: 24px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+
+    /* Syntax Highlighting Colors */
+    .kw { color: #f472b6; }
+    .fn { color: #38bdf8; }
+    .str { color: #4ade80; }
+    .num { color: #fbbf24; }
+    .dec { color: #c084fc; }
+
+    /* Features Section */
+    .section {
+      padding: 90px 0;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      text-align: center;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 60px;
+      font-size: 1.05rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 28px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 32px;
+      border-radius: var(--radius-md);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      background: var(--bg-card-hover);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .card-text {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Complex Projects & Swarm Section */
+    .swarm-box {
+      background: linear-gradient(135deg, rgba(17, 23, 38, 0.9), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 48px;
+      margin-top: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .swarm-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.15), transparent 70%);
+      pointer-events: none;
+    }
+
+    .swarm-header {
+      margin-bottom: 32px;
+    }
+
+    .swarm-tag {
+      display: inline-block;
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--accent-purple);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* API Table */
+    .api-table-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-top: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background: #0f1422;
+      padding: 16px 20px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.95rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    td code {
+      font-family: 'Fira Code', monospace;
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--accent-emerald);
+      color: #000;
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--accent-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header / Navigation -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="#" class="logo">
+        <div class="logo-icon">R</div>
+        <span>python-bedrock-protocol</span>
+        <span class="badge-ver">v0.3.0</span>
+      </a>
+
+      <nav>
+        <ul>
+          <li><a href="#features">Возможности</a></li>
+          <li><a href="#examples">Примеры</a></li>
+          <li><a href="#swarm">Мульти-Боты</a></li>
+          <li><a href="#api">API Справка</a></li>
+          <li><a href="#benchmark">Бенчмарк</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <button class="btn-pip" onclick="copyInstallCmd()">
+          <span>pip install r-python-bedrock-protocol</span>
+          <span style="color:var(--accent-cyan);">📋</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero-title">Высокопроизводительный асинхронный протокол Minecraft Bedrock</h1>
+      <p class="hero-subtitle">
+        Мощный двигатель на Python для запуска одиночных ботов, масштабных мульти-бот роев (Swarm), собственного Bedrock-сервера и анализатора трафика (Relay).
+      </p>
+
+      <div class="hero-btns">
+        <a href="#examples" class="btn-primary">Примеры кода</a>
+        <a href="#swarm" class="btn-secondary">Мульти-Бот Кластеры</a>
+      </div>
+
+      <!-- Live Code Window -->
+      <div class="code-preview-window">
+        <div class="preview-header">
+          <div class="window-dots">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
+          </div>
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('single')">Одиночный бот</button>
+            <button class="tab-btn" onclick="switchTab('swarm')">Мульти-боты (Swarm)</button>
+            <button class="tab-btn" onclick="switchTab('ping')">Статус сервера (Ping)</button>
+            <button class="tab-btn" onclick="switchTab('server')">Собственный сервер</button>
+          </div>
+          <button class="tab-btn" onclick="copyActiveCode()">Копировать</button>
+        </div>
+
+        <div class="code-content">
+          <pre id="code-block"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="section">
+    <div class="container">
+      <h2 class="section-title">Почему именно r-python-bedrock-protocol?</h2>
+      <p class="section-desc">Максимальная производительность, гибкость конфигурации и готовность к сложным нагрузкам.</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <h3 class="card-title">AsyncIO & RakNet Transport</h3>
+          <p class="card-text">Построено на событийно-ориентированной архитектуре `asyncio` с поддержкой `uvloop` для минимальных задержек и высокой пропускной способности пакетов.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🤖</div>
+          <h3 class="card-title">Мульти-Боты (BotCluster)</h3>
+          <p class="card-text">Встроенная система управления десятками параллельных ботов: авто-переподключение, общая рассылка сообщений, единая статистика и изоляция состояний.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🔒</div>
+          <h3 class="card-title">Native Cryptography</h3>
+          <p class="card-text">Прямая интеграция OpenSSL (`cryptography`) для генерации ECDH-ключей и шифрования сетевых пакетов по стандарту AES-256-CFB8.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">📱</div>
+          <h3 class="card-title">Спуфинг Устройств</h3>
+          <p class="card-text">Полный контроль над идентификацией клиента: эмуляция Windows, Android, iOS, Nintendo Switch, установка любого DeviceID, Model и ClientRandomID.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">📊</div>
+          <h3 class="card-title">Автоматический Лог и Статистика</h3>
+          <p class="card-text">Встроенный сбор истории чата в JSON, отдельное логирование сообщений, подсчет пакетов, времени аптайма и ошибок в реальном времени.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🛠️</div>
+          <h3 class="card-title">Relay MITM & Server</h3>
+          <p class="card-text">Входит полноценный протокольный сервер `create_server` и прокси-инструмент `Relay` для перехвата, модификации и отладки пакетов Bedrock.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Multi-Bot & Complex Projects Section -->
+  <section id="swarm" class="section" style="background: rgba(17, 23, 38, 0.4); border-y: 1px solid var(--border-color);">
+    <div class="container">
+      <div class="swarm-box">
+        <div class="swarm-header">
+          <span class="swarm-tag">Сложные Проекты и Оркестрация</span>
+          <h2 class="section-title" style="text-align: left; margin-bottom: 12px;">Управление Параллельными Ботами и Сложная Автоматизация</h2>
+          <p style="color: var(--text-muted); max-width: 720px;">
+            Благодаря встроенному `BotCluster` вы можете запускать бот-сети для стресс-тестов, мостов с Discord/Telegram, авто-модераторов, мониторинга онлайна и сбора аналитики.
+          </p>
+        </div>
+
+        <div class="grid-3" style="margin-top: 30px;">
+          <div class="card" style="background: #0d121f;">
+            <h4 style="font-size: 1.1rem; margin-bottom: 8px; color: var(--accent-cyan);">🔥 Стресс-тестирование Серверов</h4>
+            <p class="card-text">Создание роя из 10-50 ботов с разной конфигурацией устройств для проверки устойчивости спавна и RakNet-соединений.</p>
+          </div>
+
+          <div class="card" style="background: #0d121f;">
+            <h4 style="font-size: 1.1rem; margin-bottom: 8px; color: var(--accent-purple);">💬 Мост Игрового Чата</h4>
+            <p class="card-text">Пересылка игрового чата в Telegram/Discord и отправка ответов обратно в Minecraft через асинхронные события `@bot.on("chat")`.</p>
+          </div>
+
+          <div class="card" style="background: #0d121f;">
+            <h4 style="font-size: 1.1rem; margin-bottom: 8px; color: var(--accent-emerald);">📈 Сборщик Метрик и Логер</h4>
+            <p class="card-text">Непрерывный мониторинг онлайна игрового сервера, сохранение логов чата в JSON и отслеживание задержек.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API Reference Section -->
+  <section id="api" class="section">
+    <div class="container">
+      <h2 class="section-title">Справка по API Библиотеки</h2>
+      <p class="section-desc">Ключевые классы и функции для разработки.</p>
+
+      <div class="api-table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Класс / Функция</th>
+              <th>Назначение</th>
+              <th>Основные методы и параметры</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Bot(host, port, config)</code></td>
+              <td>Высокоуровневый бот Minecraft Bedrock с авто-реконнектом.</td>
+              <td><code>start()</code>, <code>run()</code>, <code>stop()</code>, <code>send_message()</code>, <code>send_command()</code>, <code>stats</code></td>
+            </tr>
+            <tr>
+              <td><code>BotCluster</code></td>
+              <td>Оркестратор для группы ботов.</td>
+              <td><code>create_swarm()</code>, <code>add_bot()</code>, <code>run_all()</code>, <code>stop_all()</code>, <code>broadcast()</code></td>
+            </tr>
+            <tr>
+              <td><code>BotConfig</code></td>
+              <td>Гибкая конфигурация сессии.</td>
+              <td><code>username</code>, <code>device</code>, <code>version</code>, <code>auto_reconnect</code>, <code>reconnect_delay</code>, <code>chat_autosave_file</code></td>
+            </tr>
+            <tr>
+              <td><code>ping(host, port)</code></td>
+              <td>Получение статуса сервера без авторизации.</td>
+              <td>Возвращает <code>ServerAdvertisement</code> (motd, online, max_players, protocol, version)</td>
+            </tr>
+            <tr>
+              <td><code>create_server(host, port)</code></td>
+              <td>Запуск собственного Bedrock сервера.</td>
+              <td><code>listen()</code>, обработка подключения клиентов <code>@server.on('connect')</code></td>
+            </tr>
+            <tr>
+              <td><code>Relay(host, port)</code></td>
+              <td>MITM-прокси для анализа и подмены пакетов.</td>
+              <td>Перехват входящих и исходящих пакетов в реальном времени</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benchmark Section -->
+  <section id="benchmark" class="section" style="background: rgba(17, 23, 38, 0.4);">
+    <div class="container">
+      <h2 class="section-title">Эффективность и Ресурсы</h2>
+      <p class="section-desc">Оптимизировано для работы с сотнями параллельных соединений.</p>
+
+      <div class="grid-3">
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 2.5rem; font-weight: 800; color: var(--accent-cyan);">~12 МБ</div>
+          <p class="card-text" style="margin-top: 8px;">Оперативной памяти на одного активного бота</p>
+        </div>
+
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 2.5rem; font-weight: 800; color: var(--accent-purple);">&lt; 15 мс</div>
+          <p class="card-text" style="margin-top: 8px;">Время установления рукопожатия RakNet</p>
+        </div>
+
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 2.5rem; font-weight: 800; color: var(--accent-emerald);">100%</div>
+          <p class="card-text" style="margin-top: 8px;">Чистый асинхронный кодовый базис</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p style="margin-bottom: 8px;">r-python-bedrock-protocol &copy; 2026. Распространяется под лицензией MIT.</p>
+      <p><a href="https://github.com/Reikiioi/r-python-bedrock-protocol" target="_blank">Исходный код на GitHub</a></p>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">Код скопирован в буфер обмена!</div>
+
+  <script>
+    const codeSnippets = {
+      single: `<span class="kw">import</span> asyncio
+<span class="kw">from</span> r_python_bedrock_protocol <span class="kw">import</span> Bot, BotConfig
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    cfg = <span class="fn">BotConfig</span>(
+        username=<span class="str">"Steve_Bot"</span>,
+        device=<span class="str">"windows"</span>,
+        version=<span class="str">"1.20.80"</span>,
+        auto_reconnect=<span class="num">True</span>,
+        chat_log_file=<span class="str">"chat.log"</span>
+    )
+    bot = <span class="fn">Bot</span>(<span class="str">"127.0.0.1"</span>, <span class="num">19132</span>, config=cfg)
+
+    <span class="dec">@bot.on</span>(<span class="str">"connect"</span>)
+    <span class="kw">def</span> <span class="fn">on_connect</span>():
+        <span class="fn">print</span>(<span class="str">"Подключено к серверу!"</span>)
+
+    <span class="dec">@bot.on</span>(<span class="str">"join"</span>)
+    <span class="kw">async def</span> <span class="fn">on_join</span>():
+        <span class="kw">await</span> bot.<span class="fn">send_message</span>(<span class="str">"Привет всем из Python!"</span>)
+
+    <span class="dec">@bot.on</span>(<span class="str">"chat"</span>)
+    <span class="kw">def</span> <span class="fn">on_chat</span>(entry):
+        <span class="fn">print</span>(f<span class="str">"&lt;{entry.get('source')}&gt; {entry.get('message')}"</span>)
+
+    <span class="kw">await</span> bot.<span class="fn">run</span>()
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    asyncio.<span class="fn">run</span>(<span class="fn">main</span>())`,
+
+      swarm: `<span class="kw">import</span> asyncio
+<span class="kw">from</span> r_python_bedrock_protocol <span class="kw">import</span> BotCluster, BotConfig
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    template = <span class="fn">BotConfig</span>(version=<span class="str">"1.20.80"</span>, auto_reconnect=<span class="num">True</span>)
+    cluster = BotCluster.<span class="fn">create_swarm</span>(
+        host=<span class="str">"play.server.net"</span>,
+        port=<span class="num">19132</span>,
+        names=[<span class="str">"Bot_Alpha"</span>, <span class="str">"Bot_Beta"</span>, <span class="str">"Bot_Gamma"</span>],
+        config_template=template
+    )
+
+    cluster.<span class="fn">on_all</span>(<span class="str">"join"</span>, <span class="kw">lambda</span>: <span class="fn">print</span>(<span class="str">"Один из ботов вошел в мир!"</span>))
+
+    <span class="fn">print</span>(<span class="str">"Запуск кластера из 3 ботов..."</span>)
+    <span class="kw">await</span> cluster.<span class="fn">run_all</span>()
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    asyncio.<span class="fn">run</span>(<span class="fn">main</span>())`,
+
+      ping: `<span class="kw">import</span> asyncio
+<span class="kw">from</span> r_python_bedrock_protocol <span class="kw">import</span> ping
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    info = <span class="kw">await</span> <span class="fn">ping</span>(<span class="str">"play.cubecraft.net"</span>, <span class="num">19132</span>)
+    <span class="fn">print</span>(f<span class="str">"MOTD: {info.motd}"</span>)
+    <span class="fn">print</span>(f<span class="str">"Версия: {info.version} (Протокол {info.protocol_version})"</span>)
+    <span class="fn">print</span>(f<span class="str">"Игроки: {info.players_online}/{info.players_max}"</span>)
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    asyncio.<span class="fn">run</span>(<span class="fn">main</span>())`,
+
+      server: `<span class="kw">import</span> asyncio
+<span class="kw">from</span> r_python_bedrock_protocol <span class="kw">import</span> create_server
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    server = <span class="fn">create_server</span>(host=<span class="str">"0.0.0.0"</span>, port=<span class="num">19132</span>, motd=<span class="str">"Python Bedrock Server"</span>)
+
+    <span class="dec">@server.on</span>(<span class="str">"connect"</span>)
+    <span class="kw">def</span> <span class="fn">on_connect</span>(client):
+        <span class="fn">print</span>(f<span class="str">"Новый игрок подключен: {client.address}"</span>)
+
+    <span class="kw">await</span> server.<span class="fn">listen</span>()
+    <span class="fn">print</span>(<span class="str">"Сервер запущен на порт 19132..."</span>)
+    <span class="kw">await</span> asyncio.<span class="fn">Event</span>().<span class="fn">wait</span>()
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    asyncio.<span class="fn">run</span>(<span class="fn">main</span>())`
+    };
+
+    let activeTab = 'single';
+
+    function switchTab(tabKey) {
+      activeTab = tabKey;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('code-block').innerHTML = codeSnippets[tabKey];
+    }
+
+    function copyInstallCmd() {
+      navigator.clipboard.writeText("pip install r-python-bedrock-protocol");
+      showToast("Команда установки скопирована!");
+    }
+
+    function copyActiveCode() {
+      const tempEl = document.createElement('textarea');
+      tempEl.value = codeSnippets[activeTab].replace(/<[^>]*>/g, '');
+      document.body.appendChild(tempEl);
+      tempEl.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempEl);
+      showToast("Код скопирован в буфер обмена!");
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // Init first tab
+    document.getElementById('code-block').innerHTML = codeSnippets['single'];
+  </script>
+</body>
+</html>

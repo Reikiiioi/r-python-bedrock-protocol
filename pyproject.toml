@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "r-python-bedrock-protocol"
+version = "0.3.0"
+description = "High-performance Python library for Minecraft: Bedrock Edition protocol"
+readme = "README.md"
+authors = [
+    { name = "Reikiioi" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "cryptography>=41.0.0",
+    "httpx>=0.25.0",
+    "pyjwt>=2.8.0",
+    "nbtlib>=2.0.4",
+    "uvloop>=0.19.0; sys_platform != 'win32'"
+]
+
+[project.urls]
+Homepage = "https://github.com/Reikiioi/r-python-bedrock-protocol"
+Repository = "https://github.com/Reikiioi/r-python-bedrock-protocol"

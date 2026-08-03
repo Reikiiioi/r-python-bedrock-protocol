@@ -1,0 +1,85 @@
+# ── Python ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ── Build / dist ─────────────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+wheels/
+sdist/
+.eggs/
+*.whl
+
+# ── Virtual environments ──────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+.venv.bak/
+
+# ── Test & coverage ───────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.cover
+.hypothesis/
+nosetests.xml
+
+# ── Type checkers ─────────────────────────────────────────────────────
+.mypy_cache/
+.pyright/
+.dmypy.json
+pyrightconfig.json
+
+# ── IDEs / editors ────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.spyderproject.db
+.spyproject
+
+# ── OS junk ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs & runtime data ───────────────────────────────────────────────
+*.log
+logs/
+data/
+*.pid
+
+# ── Credentials / secrets — NEVER commit these ───────────────────────
+.env
+.env.*
+secrets.json
+credentials.json
+*.pem
+*.key
+
+# ── Node (leftover from JS bedrock-protocol origin) ──────────────────
+node_modules/
+npm-debug.log
+package-lock.json
+yarn.lock
+
+# ── BDS / PocketMine server binaries ─────────────────────────────────
+tools/bds*
+tools/pmmp*
+
+# ── Temp / scratch ────────────────────────────────────────────────────
+*.tmp
+*.bak
+*.orig
+scratch/
+tmp/
