@@ -65,7 +65,12 @@ auth_tokens = set()
 async def handle_locale(request):
     return web.json_response(t_locale)
 
+async def handle_versions(request):
+    from r_python_bedrock_protocol import VERSIONS
+    return web.json_response(list(VERSIONS.keys()))
+
 async def handle_login(request):
+
     try:
         data = await request.json()
     except Exception:
@@ -116,7 +121,9 @@ async def handle_dashboard(request):
     return web.FileResponse(os.path.join(root_dir, 'public', 'dashboard.html'))
 
 app.router.add_get('/api/locale', handle_locale)
+app.router.add_get('/api/versions', handle_versions)
 app.router.add_post('/api/login', handle_login)
+
 app.router.add_get('/api/config', handle_get_config)
 app.router.add_post('/api/config', handle_post_config)
 app.router.add_get('/', handle_index)

@@ -22,18 +22,28 @@ const BEDROCK_VERSIONS = [
   '0.15.6',   '0.14.3'
 ];
 
-function initVersions() {
+async function initVersions() {
   const cfgSel = document.getElementById('cfg-version');
   const manSel = document.getElementById('manual-version');
   if (!cfgSel || !manSel) return;
   
+  let versions = BEDROCK_VERSIONS;
+  try {
+    const res = await fetch('/api/versions');
+    const apiVersions = await res.json();
+    if (Array.isArray(apiVersions) && apiVersions.length > 0) {
+      versions = apiVersions;
+    }
+  } catch (e) {}
+
   let html = '';
-  BEDROCK_VERSIONS.forEach(v => {
+  versions.forEach(v => {
     html += `<option value="${v}">${v}</option>`;
   });
   cfgSel.innerHTML = html;
   manSel.innerHTML = html;
 }
+
 
 function initCanvas() {
   const canvas = document.getElementById('bg-canvas');
